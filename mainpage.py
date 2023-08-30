@@ -12,8 +12,8 @@ Connection=mysql.connector.connect(host="localhost", user="root", password="root
 mycursor = Connection.cursor()
 mycursor.execute("use phonepepulse;")
 with st.sidebar:
-    selected = streamlit_option_menu.option_menu("Menu", ["About", "Data Explore", "Charts"],
-                                                 icons=["exclamation-circle","pie-chart","bar-chart-line", ],
+    selected = streamlit_option_menu.option_menu("Menu", ["About", "Data Explore", "Charts", 'Statistics'],
+                                                 icons=["exclamation-circle","pie-chart","bar-chart-line","graph-up-arrow" ],
                                                  menu_icon= "menu-button-wide",
                                                  default_index=0,
                                                  styles={"nav-link": {"font-size": "20px", "text-align": "left", "margin": "-2px", "--hover-color": "#f5da42"},
@@ -84,7 +84,7 @@ if selected == "Charts":
         mycursor.execute(
             f'select District_name, sum(Transaction_amount) as Total_Tr_Amount, sum(Transaction_count) as Total_Tr_Count from phonepepulse.tr_map_df where Year={Year} and Quarter={Quarter}  group by District_name order by Total_Tr_Amount desc limit 10')
         df = pd.DataFrame(mycursor.fetchall(), columns=['District_name', 'Total_Tr_Amount', 'Total_Tr_Count'])
-        image = px.pie(df, title='Top 10 Districts', values='Total_Tr_Amount', names='District_name',
+        image = px.pie(df, title='Top 10 Districts', values='Total_Tr_Count', names='District_name',
                        color_discrete_sequence=px.colors.sequential.deep, hover_data=['Total_Tr_Count'],
                        labels={'Total_Tr_Count': 'Total_Tr_Count'})
         image.update_traces(textposition='inside', textinfo='percent+label')
@@ -237,6 +237,8 @@ if selected == "Data Explore":
             img.update_geos(fitbounds="locations", visible=False)
             st.plotly_chart(img, use_container_width=True)
 
+
+
         if Type == "User":
 
             st.markdown("## :red[Overall State Data - Total User ]")
@@ -261,11 +263,10 @@ if selected == "Data Explore":
     if chart == "Charts":
         st.markdown("### :green[State]")
         mycursor.execute(
-            f"select State, sum(Registeredusers) as TotalUsr, sum(AppOpens) as TotalAppopens from phonepepulse.usr_map_df where year = {Year} and quarter = {Quarter} group by State order by TotalUsr desc limit 10")
+            f"select State, sum(Registeredusers) as TotalUsr, sum(AppOpens) as TotalAppopens from phonepepulse.usr_map_df where year = {Year} and quarter = {Quarter} group by State order by TotalUsr desc")
         df = pd.DataFrame(mycursor.fetchall(), columns=['State', 'TotalUsr', 'TotalAppopens'])
         img = px.pie(df, values='TotalUsr',
                      names='State',
-                     title='Top 10 States',
                      color_discrete_sequence=px.colors.sequential.Aggrnyl_r,
                      hover_data=['TotalAppopens'],
                      labels={'TotalAppopens': 'TotalAppopens'})
@@ -274,12 +275,12 @@ if selected == "Data Explore":
         st.plotly_chart(img, use_container_width=True)
 
 
+
         st.markdown("### :blue[District]")
         mycursor.execute(
-            f"select District_name, sum(RegisteredUsers) as TotalUsrCount, sum(AppOpens) as Total_Appopens from phonepepulse.usr_map_df where year = {Year} and quarter = {Quarter} group by District_name order by TotalUsrCount desc limit 10")
+            f"select District_name, sum(RegisteredUsers) as TotalUsrCount, sum(AppOpens) as Total_Appopens from phonepepulse.usr_map_df where year = {Year} and quarter = {Quarter} group by District_name order by TotalUsrCount desc limit 15")
         df = pd.DataFrame(mycursor.fetchall(), columns=['District_name', 'TotalUsrCount', 'Total_Appopens'])
         img = px.bar(df,
-                     title='Top 10 Districts',
                      x="TotalUsrCount",
                      y="District_name",
                      orientation='h',
@@ -289,14 +290,62 @@ if selected == "Data Explore":
 
         st.markdown("### :violet[Pincode]")
         mycursor.execute(
-            f"select Pincodes, sum(RegisteredUsers) as TotalUsers from phonepepulse.usrp_tp_df where year = {Year} and quarter = {Quarter} group by Pincodes order by TotalUsers desc limit 10")
+            f"select Pincodes, sum(RegisteredUsers) as TotalUsers from phonepepulse.usrp_tp_df where year = {Year} and quarter = {Quarter} group by Pincodes order by TotalUsers desc limit 15")
         df = pd.DataFrame(mycursor.fetchall(), columns=['Pincodes', 'TotalUsers'])
         img = px.pie(df,
                      values='TotalUsers',
                      names='Pincodes',
-                     title='Top 10 Pincodes',
                      color_discrete_sequence=px.colors.sequential.deep,
                      hover_data=['TotalUsers'])
         img.update_traces(textposition='inside', textinfo='percent+label')
         st.plotly_chart(img, use_container_width=True)
 
+
+if selected=='Statistics':
+
+    col2, col3 = st.columns([1.5, 1], gap="large")
+    with col2:
+        Year = st.selectbox('Year', (2018, 2019, 2020, 2021, 2022, 2023))
+
+    with col3:
+        if Year == 2023:
+            Quarter = st.selectbox('Quarter', (1, 2))
+        else:
+            Quarter = st.selectbox("Quarter", (1, 2, 3, 4))
+
+    charttype=st.selectbox("Chart type", ('Bar', 'Pie'))
+
+    if charttype=='Bar':
+        st.markdown("## :orange[Top Payment Category]")
+        mycursor.execute(
+            f"select Category, sum(Count) as Total_Transactions_Count, sum(Amount) as Total_TR_amount from phonepepulse.aggregated_all_india_transaction_df where year= {Year} and quarter = {Quarter} group by Category order by Category")
+        df = pd.DataFrame(mycursor.fetchall(), columns=['Category', 'Total_Transactions_Count', 'Total_TR_amount'])
+
+        img = px.bar(df,
+                     title='Category vs Total_Transactions_Count',
+                     x="Category",
+                     y="Total_Transactions_Count",
+                     orientation='v',
+                     color='Total_TR_amount',
+                     color_continuous_scale=px.colors.sequential.deep)
+        st.plotly_chart(img, use_container_width=False)
+
+
+    if charttype=='Pie':
+        col2, col3 = st.columns([20, 1], gap="large")
+        with col2:
+            st.markdown("## :orange[Top Payment Category]")
+            mycursor.execute(
+                f"select Category, sum(Count) as Total_Transactions_Count, sum(Amount) as Total_TR_amount from phonepepulse.aggregated_all_india_transaction_df where year= {Year} and quarter = {Quarter} group by Category order by Category")
+            df = pd.DataFrame(mycursor.fetchall(), columns=['Category', 'Total_Transactions_Count', 'Total_TR_amount'])
+
+            img = px.pie(df,values='Total_TR_amount', names='Category', hover_data=['Total_TR_amount'],color_discrete_sequence=px.colors.sequential.Agsunset)
+            st.plotly_chart(img, use_container_width=False)
+        with col3:
+            st.markdown('## :orange[Top Brands]')
+            mycursor.execute(
+                f"select Brands, sum(UsrCount) as Total_Usr_Count, sum(Percentage) as Total_Usr_Percentage from  phonepepulse.usr_ag_df where year= 2018 and quarter = 1 group by Brands order by Brands")
+            df = pd.DataFrame(mycursor.fetchall(), columns=['Brands', 'Total_Usr_Count', 'Total_Usr_Percentage'])
+            img = px.pie(df, values='Total_Usr_Count', names='Brands', hover_data=['Total_Usr_Count'],
+                         color_discrete_sequence=px.colors.sequential.Pinkyl_r)
+            st.plotly_chart(img, use_container_width=False)
