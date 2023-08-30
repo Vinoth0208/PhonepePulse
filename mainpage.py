@@ -95,7 +95,7 @@ if selected == "Charts":
         mycursor.execute(
             f'select Pincodes, sum(Amount) as Total_Tr_Amount, sum(Count) as Total_Tr_Count from phonepepulse.topdata_all_india_transaction_pincode_df where Year={Year} and Quarter={Quarter}  group by Pincodes order by Total_Tr_Amount desc limit 10')
         df = pd.DataFrame(mycursor.fetchall(), columns=['Pincodes', 'Total_Tr_Amount', 'Total_Tr_Count'])
-        image = px.pie(df, title='Top 10 Districts', values='Total_Tr_Amount', names='Pincodes',
+        image = px.pie(df, title='Top 10 Pincodes', values='Total_Tr_Amount', names='Pincodes',
                        color_discrete_sequence=px.colors.sequential.Magenta_r, hover_data=['Total_Tr_Count'],
                        labels={'Total_Tr_Count': 'Total_Tr_Count'})
         image.update_traces(textposition='inside', textinfo='percent+label')
